@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Premium Admin Panel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #161a22;
+      --surface2: #1e2330;
+      --border:   rgba(255,255,255,0.09);
+      --accent:   #4f8cff;
+      --green:    #22c55e;
+      --red:      #ef4444;
+      --gold:     #ffc84a;
+      --text:     #f0f2f7;
+      --text2:    #b0b8cc;
+      --text3:    #6e7a94;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ── Login ── */
+    #loginScreen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 32px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .login-box h1 { font-size: 1.5rem; margin-bottom: 6px; }
+    .login-box p  { color: var(--text3); margin-bottom: 24px; font-size: 0.9rem; }
+    .login-box input {
+      width: 100%; padding: 12px 14px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 1rem;
+      margin-bottom: 14px; outline: none; transition: border-color .2s;
+    }
+    .login-box input:focus { border-color: var(--accent); }
+    .login-box button {
+      width: 100%; padding: 13px;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+    }
+    .login-box button:hover { opacity: 0.88; }
+    #loginError { color: var(--red); font-size: 0.85rem; margin-top: 10px; }
+
+    /* ── App Shell ── */
+    #appScreen { display: none; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    header h1 { font-size: 1.05rem; font-weight: 700; }
+    header h1 span { color: var(--accent); }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 8px; border: none;
+      font-size: 0.82rem; font-weight: 700; cursor: pointer;
+      transition: opacity .18s, transform .15s;
+    }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-accent  { background: var(--accent);  color: #fff; }
+    .btn-green   { background: var(--green);   color: #fff; }
+    .btn-red     { background: var(--red);     color: #fff; }
+    .btn-gold    { background: var(--gold);    color: #000; }
+    .btn-surface { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-sm { padding: 5px 10px; font-size: 0.75rem; border-radius: 6px; }
+
+    main { max-width: 1000px; margin: 0 auto; padding: 24px 16px 80px; }
+
+    /* ── Stats row ── */
+    .stats-row { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      flex: 1; min-width: 130px; text-align: center;
+    }
+    .stat-num { font-size: 1.8rem; font-weight: 800; color: var(--accent); line-height: 1; }
+    .stat-lbl { color: var(--text3); font-size: 0.78rem; margin-top: 4px; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    .tab {
+      padding: 8px 16px; border-radius: 8px 8px 0 0;
+      background: none; border: 1px solid transparent;
+      color: var(--text3); font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: all .2s;
+    }
+    .tab.active {
+      background: var(--surface2);
+      border-color: var(--border);
+      border-bottom-color: var(--surface2);
+      color: var(--text);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Add User Form ── */
+    .add-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .add-form h3 { margin-bottom: 14px; font-size: 0.95rem; color: var(--text2); }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px; margin-bottom: 12px;
+    }
+    .form-grid input, .form-grid select {
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text); font-size: 0.88rem; outline: none;
+      transition: border-color .2s;
+    }
+    .form-grid input:focus, .form-grid select:focus { border-color: var(--accent); }
+    .form-grid select option { background: var(--bg); }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead th {
+      background: var(--surface2);
+      color: var(--text3);
+      font-weight: 700;
+      padding: 11px 14px;
+      text-align: left;
+      white-space: nowrap;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td {
+      padding: 11px 14px;
+      color: var(--text2);
+      vertical-align: middle;
+    }
+    td.id { font-family: monospace; color: var(--text3); font-size: 0.78rem; }
+    td.name { color: var(--text); font-weight: 600; }
+    td.plan { color: var(--gold); font-size: 0.8rem; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .badge-green  { background: rgba(34,197,94,.15);  color: var(--green); }
+    .badge-red    { background: rgba(239,68,68,.15);   color: var(--red);   }
+    .badge-gold   { background: rgba(255,200,74,.15);  color: var(--gold);  }
+    .badge-blue   { background: rgba(79,140,255,.15);  color: var(--accent);}
+
+    .empty { text-align: center; padding: 40px; color: var(--text3); font-size: 0.9rem; }
+
+    /* ── Search bar ── */
+    .search-bar {
+      width: 100%; padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      margin-bottom: 14px;
+      transition: border-color .2s;
+    }
+    .search-bar:focus { border-color: var(--accent); }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #1e2a1e; border: 1px solid var(--green);
+      color: var(--green); padding: 10px 22px; border-radius: 999px;
+      font-weight: 700; font-size: 0.88rem;
+      display: none; z-index: 9999;
+      animation: toastIn .3s ease;
+    }
+    @keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(10px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+
+    /* ── Loader ── */
+    .loader { text-align: center; padding: 30px; color: var(--text3); }
+    .spinner {
+      display: inline-block; width: 28px; height: 28px;
+      border: 3px solid rgba(79,140,255,.2); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Backup section ── */
+    .backup-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px; margin-bottom: 16px;
+    }
+    .backup-card h3 { margin-bottom: 6px; }
+    .backup-card p  { color: var(--text3); font-size: 0.85rem; margin-bottom: 14px; }
+
+    @media (max-width: 600px) {
+      header { padding: 12px 14px; }
+      .stats-row { gap: 8px; }
+      .stat-card { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN SCREEN ══════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>🔐 Admin Panel</h1>
+    <p>Intel Premium Management</p>
+    <input type="text" id="railwayUrl" placeholder="Railway backend URL (https://…)" autocomplete="off" />
+    <input type="password" id="adminPass" placeholder="Admin password" autocomplete="off" />
+    <button onclick="doLogin()">Login →</button>
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<!-- ══════════ APP SCREEN ══════════ -->
+<div id="appScreen">
+  <header>
+    <h1>💎 Intel <span>Premium Admin</span></h1>
+    <div class="header-actions">
+      <button class="btn btn-gold" onclick="doBackup()">⬆ Backup to GitHub</button>
+      <button class="btn btn-surface" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="statTotal">—</div>
+        <div class="stat-lbl">Total Premium</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statForever">—</div>
+        <div class="stat-lbl">Forever Plan</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statTimed">—</div>
+        <div class="stat-lbl">Timed Plans</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statPending">—</div>
+        <div class="stat-lbl">Pending Payments</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('premium')">💎 Premium Users</button>
+      <button class="tab" onclick="switchTab('payments')">💳 Payments</button>
+      <button class="tab" onclick="switchTab('backup')">☁ Backup</button>
+    </div>
+
+    <!-- ── TAB: Premium Users ── -->
+    <div id="tab-premium" class="tab-panel active">
+      <!-- Add user form -->
+      <div class="add-form">
+        <h3>➕ Add Premium User Manually</h3>
+        <div class="form-grid">
+          <input type="number" id="add_tid"   placeholder="Telegram ID *" />
+          <input type="text"   id="add_fname" placeholder="First Name" />
+          <input type="text"   id="add_lname" placeholder="Last Name" />
+          <input type="text"   id="add_uname" placeholder="Username (no @)" />
+          <select id="add_plan">
+            <option value="One week plan — ₦5,000">One week — ₦5,000</option>
+            <option value="Two Weeks — ₦10,000">Two Weeks — ₦10,000</option>
+            <option value="Forever One time payment — ₦25,000">Forever</option>
+            <option value="Manual">Manual</option>
+          </select>
+          <input type="number" id="add_days" placeholder="Days (0 = forever)" min="0" />
+        </div>
+        <button class="btn btn-green" onclick="addUser()">➕ Add User &amp; Notify</button>
+      </div>
+
+      <!-- Search -->
+      <input class="search-bar" id="premiumSearch" placeholder="🔍 Search by name, username, or Telegram ID…" oninput="filterPremium()" />
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Telegram ID</th>
+              <th>Name</th>
+              <th>Username</th>
+              <th>Plan</th>
+              <th>Added</th>
+              <th>Expires</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="premiumTable">
+            <tr><td colspan="7" class="loader"><div class="spinner"></div><br>Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── TAB: Payments ── -->
+    <div id="tab-payments" class="tab-panel">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Telegram ID</th>
+              <th>Name</th>
+              <th>Plan</th>
+              <th>Method</th>
+              <th>WhatsApp</th>
+              <th>Submitted</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="paymentsTable">
+            <tr><td colspan="8" class="loader"><div class="spinner"></div><br>Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── TAB: Backup ── -->
+    <div id="tab-backup" class="tab-panel">
+      <div class="backup-card">
+        <h3>⬆ Backup to GitHub</h3>
+        <p>
+          Pushes current active premium user IDs to <code>premiumlist.js</code> in your GitHub repo.
+          This also runs automatically every 2 hours from the server.
+        </p>
+        <button class="btn btn-gold" onclick="doBackup()">⬆ Backup Now</button>
+        <span id="backupStatus" style="margin-left:12px;font-size:0.85rem;color:var(--text3);"></span>
+      </div>
+      <div class="backup-card">
+        <h3>🔗 Webhook Setup</h3>
+        <p>Set your Telegram bot webhook so the server can receive confirm/decline callbacks from admin.</p>
+        <button class="btn btn-accent" onclick="setupWebhook()">🔗 Setup Webhook</button>
+        <span id="webhookStatus" style="margin-left:12px;font-size:0.85rem;color:var(--text3);"></span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+  // ── State ──
+  let RAILWAY = "";
+  let PASS    = "";
+  let allPremiumUsers = [];
+
+  // ── Login ──
+  function doLogin() {
+    const url  = document.getElementById("railwayUrl").value.trim().replace(/\/$/, "");
+    const pass = document.getElementById("adminPass").value.trim();
+    if (!url || !pass) { setLoginError("Fill in both fields."); return; }
+
+    // Test the connection
+    setLoginError("Verifying…");
+    fetch(`${url}/admin/premium`, { headers: { "x-admin-password": pass } })
+      .then(r => {
+        if (r.status === 401) { setLoginError("❌ Wrong password."); return null; }
+        if (!r.ok)            { setLoginError(`❌ Server error (${r.status})`); return null; }
+        return r.json();
+      })
+      .then(data => {
+        if (!data) return;
+        RAILWAY = url;
+        PASS    = pass;
+        localStorage.setItem("intel_admin_railway", url);
+        localStorage.setItem("intel_admin_pass",    pass);
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appScreen").style.display   = "block";
+        loadAll();
+      })
+      .catch(() => setLoginError("❌ Cannot reach server. Check the URL."));
+  }
+
+  function setLoginError(msg) {
+    document.getElementById("loginError").textContent = msg;
+  }
+
+  function logout() {
+    localStorage.removeItem("intel_admin_pass");
+    location.reload();
+  }
+
+  // Auto-restore session
+  window.addEventListener("DOMContentLoaded", () => {
+    const savedUrl  = localStorage.getItem("intel_admin_railway");
+    const savedPass = localStorage.getItem("intel_admin_pass");
+    if (savedUrl)  document.getElementById("railwayUrl").value = savedUrl;
+    if (savedPass) document.getElementById("adminPass").value  = savedPass;
+
+    document.getElementById("adminPass").addEventListener("keydown", e => {
+      if (e.key === "Enter") doLogin();
+    });
+  });
+
+  // ── API Helper ──
+  function api(method, path, body) {
+    const opts = {
+      method,
+      headers: { "x-admin-password": PASS }
+    };
+    if (body && method !== "GET") {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    return fetch(RAILWAY + path, opts).then(r => r.json());
+  }
+
+  // ── Load All Data ──
+  async function loadAll() {
+    await Promise.all([ loadPremium(), loadPayments() ]);
+  }
+
+  // ── Load Premium Users ──
+  async function loadPremium() {
+    try {
+      const data = await api("GET", "/admin/premium");
+      allPremiumUsers = data;
+      renderPremium(data);
+      updateStats(data);
+    } catch (e) {
+      document.getElementById("premiumTable").innerHTML =
+        `<tr><td colspan="7" class="empty">❌ Failed to load users</td></tr>`;
+    }
+  }
+
+  function renderPremium(users) {
+    const tbody = document.getElementById("premiumTable");
+    if (!users || users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty">No premium users yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = users.map(u => {
+      const expired  = u.expires_at && new Date(u.expires_at) < new Date();
+      const forever  = !u.expires_at;
+      const expLabel = forever ? '<span class="badge badge-gold">Forever</span>'
+                               : expired
+                                   ? '<span class="badge badge-red">Expired</span>'
+                                   : `<span class="badge badge-green">${fmtDate(u.expires_at)}</span>`;
+      const name = `${u.first_name || ""} ${u.last_name || ""}`.trim() || "—";
+      const uname = u.username ? `@${u.username}` : "—";
+      return `
+        <tr>
+          <td class="id">${u.telegram_id}</td>
+          <td class="name">${esc(name)}</td>
+          <td>${esc(uname)}</td>
+          <td class="plan">${esc(u.plan || "—")}</td>
+          <td style="color:var(--text3);font-size:0.78rem;">${fmtDate(u.added_at)}</td>
+          <td>${expLabel}</td>
+          <td>
+            <button class="btn btn-red btn-sm" onclick="removeUser(${u.telegram_id}, '${esc(name)}')">
+              🗑 Remove
+            </button>
+          </td>
+        </tr>`;
+    }).join("");
+  }
+
+  function filterPremium() {
+    const q = document.getElementById("premiumSearch").value.toLowerCase();
+    if (!q) { renderPremium(allPremiumUsers); return; }
+    const filtered = allPremiumUsers.filter(u =>
+      String(u.telegram_id).includes(q) ||
+      (u.first_name  || "").toLowerCase().includes(q) ||
+      (u.last_name   || "").toLowerCase().includes(q) ||
+      (u.username    || "").toLowerCase().includes(q)
+    );
+    renderPremium(filtered);
+  }
+
+  // ── Load Payments ──
+  async function loadPayments() {
+    try {
+      const data = await api("GET", "/admin/payments");
+      renderPayments(data);
+      document.getElementById("statPending").textContent =
+        (data || []).filter(p => p.status === "pending").length;
+    } catch (e) {
+      document.getElementById("paymentsTable").innerHTML =
+        `<tr><td colspan="8" class="empty">❌ Failed to load payments</td></tr>`;
+    }
+  }
+
+  function renderPayments(payments) {
+    const tbody = document.getElementById("paymentsTable");
+    if (!payments || payments.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty">No payments yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = payments.map(p => {
+      const statusBadge =
+        p.status === "confirmed" ? '<span class="badge badge-green">✅ Confirmed</span>' :
+        p.status === "declined"  ? '<span class="badge badge-red">❌ Declined</span>'   :
+                                   '<span class="badge badge-blue">⏳ Pending</span>';
+      const name = `${p.first_name || ""} ${p.last_name || ""}`.trim() || "—";
+      return `
+        <tr>
+          <td class="id">#${p.id}</td>
+          <td class="id">${p.telegram_id}</td>
+          <td class="name">${esc(name)}</td>
+          <td class="plan">${esc(p.plan || "—")}</td>
+          <td>${esc(p.method || "—")}</td>
+          <td>${esc(p.whatsapp || "—")}</td>
+          <td style="color:var(--text3);font-size:0.78rem;">${fmtDate(p.submitted_at)}</td>
+          <td>${statusBadge}</td>
+        </tr>`;
+    }).join("");
+  }
+
+  // ── Stats ──
+  function updateStats(users) {
+    document.getElementById("statTotal").textContent   = users.length;
+    document.getElementById("statForever").textContent = users.filter(u => !u.expires_at).length;
+    document.getElementById("statTimed").textContent   = users.filter(u => u.expires_at).length;
+  }
+
+  // ── Add User ──
+  async function addUser() {
+    const tid   = document.getElementById("add_tid").value.trim();
+    const fname = document.getElementById("add_fname").value.trim();
+    const lname = document.getElementById("add_lname").value.trim();
+    const uname = document.getElementById("add_uname").value.trim();
+    const plan  = document.getElementById("add_plan").value;
+    const days  = document.getElementById("add_days").value.trim();
+
+    if (!tid) { toast("❌ Telegram ID is required"); return; }
+
+    try {
+      const res = await api("POST", "/admin/premium/add", {
+        telegram_id: tid,
+        first_name: fname, last_name: lname,
+        username: uname, plan, days: Number(days)
+      });
+      if (res.success) {
+        toast("✅ User added & notified via bot!");
+        // Clear form
+        ["add_tid","add_fname","add_lname","add_uname","add_days"].forEach(id => {
+          document.getElementById(id).value = "";
+        });
+        await loadPremium();
+      } else {
+        toast("❌ " + (res.error || "Failed"));
+      }
+    } catch (e) {
+      toast("❌ Request failed");
+    }
+  }
+
+  // ── Remove User ──
+  async function removeUser(tid, name) {
+    if (!confirm(`Remove premium for ${name} (${tid})?`)) return;
+    try {
+      const res = await api("DELETE", `/admin/premium/${tid}`);
+      if (res.success) {
+        toast("✅ User removed from premium");
+        await loadPremium();
+      } else {
+        toast("❌ " + (res.error || "Failed"));
+      }
+    } catch (e) {
+      toast("❌ Request failed");
+    }
+  }
+
+  // ── Backup ──
+  async function doBackup() {
+    const statusEl = document.getElementById("backupStatus");
+    if (statusEl) statusEl.textContent = "⏳ Backing up…";
+    toast("⏳ Backup starting…");
+    try {
+      const res = await api("POST", "/admin/backup");
+      if (res.success) {
+        const msg = `✅ Backed up ${res.users} users to GitHub`;
+        toast(msg);
+        if (statusEl) statusEl.textContent = msg + " — " + new Date().toLocaleTimeString();
+      } else {
+        const err = "❌ Backup failed: " + (res.error || res.reason || "unknown");
+        toast(err);
+        if (statusEl) statusEl.textContent = err;
+      }
+    } catch (e) {
+      toast("❌ Backup request failed");
+    }
+  }
+
+  // ── Webhook setup ──
+  async function setupWebhook() {
+    const wUrl = RAILWAY + "/bot/webhook";
+    const statusEl = document.getElementById("webhookStatus");
+    statusEl.textContent = "⏳ Setting webhook…";
+    try {
+      const res = await api("GET", `/setup/webhook?url=${encodeURIComponent(wUrl)}`);
+      if (res.ok) {
+        statusEl.textContent = "✅ Webhook set: " + wUrl;
+        toast("✅ Webhook registered!");
+      } else {
+        statusEl.textContent = "❌ " + (res.description || JSON.stringify(res));
+      }
+    } catch (e) {
+      statusEl.textContent = "❌ Request failed";
+    }
+  }
+
+  // ── Tabs ──
+  function switchTab(name) {
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("tab-" + name).classList.add("active");
+    event.target.classList.add("active");
+    if (name === "payments") loadPayments();
+  }
+
+  // ── Utils ──
+  function fmtDate(dt) {
+    if (!dt) return "—";
+    try { return new Date(dt).toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" }); }
+    catch { return "—"; }
+  }
+
+  function esc(s) {
+    return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  let _toastTimer;
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.style.display = "block";
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => { el.style.display = "none"; }, 3500);
+  }
+</script>
+</body>
+</html>

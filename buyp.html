@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>Premium — Intelligent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ══════════════════════════════════════════
+       THEME TOKENS
+    ══════════════════════════════════════════ */
+    :root {
+      --gold:        #c9a84c;
+      --gold-light:  #e8c97a;
+      --gold-dim:    rgba(201,168,76,0.14);
+      --gold-border: rgba(201,168,76,0.22);
+      --green:       #22c55e;
+      --green-dim:   rgba(34,197,94,0.12);
+      --green-b:     rgba(34,197,94,0.28);
+      --red:         #ef4444;
+      --red-dim:     rgba(239,68,68,0.12);
+      --red-b:       rgba(239,68,68,0.3);
+      --blue:        #3b82f6;
+      --blue-dim:    rgba(59,130,246,0.12);
+      --blue-b:      rgba(59,130,246,0.28);
+      --amber:       #f59e0b;
+      --amber-dim:   rgba(245,158,11,0.12);
+      --amber-b:     rgba(245,158,11,0.3);
+      --radius:      16px;
+      --radius-sm:   10px;
+    }
+
+    /* ── DARK theme (default) ── */
+    [data-theme="dark"] {
+      --bg:         #09090f;
+      --surface:    #111118;
+      --surface2:   #16161f;
+      --surface3:   #1c1c28;
+      --border:     rgba(255,255,255,0.07);
+      --border2:    rgba(255,255,255,0.12);
+      --text:       #f0ede8;
+      --text2:      #c8c5bf;
+      --muted:      #6b6b7e;
+      --topbar-bg:  #0d0d15;
+      --card-hover: rgba(255,255,255,0.03);
+    }
+
+    /* ── LIGHT theme ── */
+    [data-theme="light"] {
+      --bg:         #f5f4f0;
+      --surface:    #ffffff;
+      --surface2:   #f0ede8;
+      --surface3:   #e8e4dd;
+      --border:     rgba(0,0,0,0.09);
+      --border2:    rgba(0,0,0,0.15);
+      --text:       #1a1916;
+      --text2:      #3d3b36;
+      --muted:      #8a8577;
+      --topbar-bg:  #ffffff;
+      --card-hover: rgba(0,0,0,0.02);
+    }
+
+    /* ══════════════════════════════════════════
+       RESET & BASE
+    ══════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 48px;
+      overflow-x: hidden;
+      transition: background 0.28s, color 0.28s;
+    }
+
+    /* ══════════════════════════════════════════
+       TOP BAR
+    ══════════════════════════════════════════ */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 20px;
+      background: var(--topbar-bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      transition: background 0.28s, border-color 0.28s;
+    }
+    .topbar .crown { font-size: 20px; }
+    .topbar .brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .topbar .spacer { flex: 1; }
+    .topbar .sub {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-right: 10px;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      width: 38px; height: 22px;
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 30px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.25s;
+      flex-shrink: 0;
+    }
+    .theme-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      background: var(--gold);
+      border-radius: 50%;
+      transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+    }
+    [data-theme="light"] .theme-toggle::after { transform: translateX(16px); }
+    .theme-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 4px; font-size: 9px; pointer-events: none; }
+
+    /* ══════════════════════════════════════════
+       TOAST NOTIFICATIONS
+    ══════════════════════════════════════════ */
+    #toastContainer {
+      position: fixed;
+      top: 62px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: calc(100% - 32px);
+      max-width: 420px;
+      pointer-events: none;
+    }
+
+    .toast {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 13px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.45;
+      border: 1px solid transparent;
+      animation: toastIn 0.3s cubic-bezier(.4,0,.2,1);
+      pointer-events: all;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-10px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .toast.out { animation: toastOut 0.25s ease forwards; }
+    @keyframes toastOut {
+      to { opacity: 0; transform: translateY(-8px) scale(0.95); }
+    }
+    .toast-success { background: rgba(34,197,94,0.15); border-color: var(--green-b); color: var(--green); }
+    .toast-error   { background: rgba(239,68,68,0.13); border-color: var(--red-b);   color: var(--red);   }
+    .toast-info    { background: rgba(59,130,246,0.12); border-color: var(--blue-b); color: var(--blue);  }
+    .toast-warn    { background: rgba(245,158,11,0.12); border-color: var(--amber-b);color: var(--amber); }
+    [data-theme="light"] .toast-success { color: #166534; }
+    [data-theme="light"] .toast-error   { color: #991b1b; }
+    [data-theme="light"] .toast-info    { color: #1e40af; }
+    [data-theme="light"] .toast-warn    { color: #92400e; }
+    .toast-icon { font-size: 15px; margin-top: 1px; flex-shrink: 0; }
+    .toast-body { flex: 1; }
+    .toast-title { font-weight: 600; margin-bottom: 2px; }
+    .toast-msg { font-size: 12px; opacity: 0.88; font-weight: 400; }
+    .toast-close { background: none; border: none; color: inherit; opacity: 0.6; cursor: pointer; font-size: 14px; margin-top: -1px; flex-shrink: 0; }
+
+    /* ══════════════════════════════════════════
+       INLINE STATUS BANNER
+    ══════════════════════════════════════════ */
+    .status-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 20px 0;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid transparent;
+      animation: rise 0.3s ease;
+    }
+    .status-banner.show { display: flex; }
+    .status-banner.info    { background: rgba(59,130,246,0.1); border-color: var(--blue-b);  color: var(--blue);  }
+    .status-banner.success { background: rgba(34,197,94,0.1);  border-color: var(--green-b); color: var(--green); }
+    .status-banner.error   { background: rgba(239,68,68,0.1);  border-color: var(--red-b);   color: var(--red);   }
+    .status-banner.warn    { background: rgba(245,158,11,0.1); border-color: var(--amber-b); color: var(--amber); }
+    [data-theme="light"] .status-banner.info    { color: #1e40af; }
+    [data-theme="light"] .status-banner.success { color: #166534; }
+    [data-theme="light"] .status-banner.error   { color: #991b1b; }
+    [data-theme="light"] .status-banner.warn    { color: #92400e; }
+    .status-icon { font-size: 16px; flex-shrink: 0; }
+    .status-text { flex: 1; line-height: 1.45; }
+    .status-text b { font-weight: 600; display: block; margin-bottom: 2px; }
+    .status-text span { font-size: 12px; opacity: 0.85; }
+
+    /* ══════════════════════════════════════════
+       PAGES
+    ══════════════════════════════════════════ */
+    .page { display: none; }
+    .page.active { display: block; animation: rise 0.32s cubic-bezier(.4,0,.2,1); }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── checking page ── */
+    #checkingPage.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 62vh;
+      gap: 18px;
+    }
+    .spinner-ring {
+      width: 52px; height: 52px;
+      border: 3px solid var(--border2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.72s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .checking-label { font-size: 14px; color: var(--muted); letter-spacing: 0.02em; }
+    .checking-sub   { font-size: 12px; color: var(--muted); opacity: 0.6; }
+
+    /* ══════════════════════════════════════════
+       SECTION HEADER
+    ══════════════════════════════════════════ */
+    .section-head {
+      padding: 26px 20px 0;
+      text-align: center;
+    }
+    .eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+    .section-head h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 29px;
+      font-weight: 700;
+      line-height: 1.12;
+      color: var(--text);
+    }
+    .section-head p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.65;
+      max-width: 310px;
+      margin-inline: auto;
+    }
+
+    /* ══════════════════════════════════════════
+       PLAN CARDS
+    ══════════════════════════════════════════ */
+    .plans { padding: 18px 20px 0; display: flex; flex-direction: column; gap: 11px; }
+
+    .plan-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: border-color 0.22s, transform 0.18s, background 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .plan-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--gold-dim) 0%, transparent 55%);
+      opacity: 0;
+      transition: opacity 0.22s;
+    }
+    .plan-card:active { transform: scale(0.985); }
+    .plan-card:hover  { border-color: var(--gold-border); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.1); }
+    .plan-card:hover::before { opacity: 1; }
+    .plan-card.featured { border-color: var(--gold-border); background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, var(--surface) 100%); }
+
+    .plan-badge {
+      position: absolute; top: 12px; right: 12px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+      color: #09090f;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 20px;
+    }
+    .plan-icon    { font-size: 21px; margin-bottom: 6px; }
+    .plan-name    { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .plan-desc    { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .plan-price-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .plan-ngn {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 27px; font-weight: 700; color: var(--gold);
+    }
+    .plan-usd {
+      font-size: 11px; color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 2px 8px; border-radius: 20px;
+      transition: background 0.2s;
+    }
+    .usd-loading { opacity: 0.5; font-style: italic; }
+
+    .rate-note { text-align: center; font-size: 11px; color: var(--muted); padding: 12px 20px 20px; line-height: 1.6; }
+
+    /* ══════════════════════════════════════════
+       INNER CARD
+    ══════════════════════════════════════════ */
+    .inner {
+      margin: 18px 20px 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+    .inner-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 700;
+      margin-bottom: 16px; text-align: center;
+      color: var(--text);
+    }
+
+    /* ══════════════════════════════════════════
+       METHOD BUTTONS
+    ══════════════════════════════════════════ */
+    .method-btn {
+      width: 100%;
+      display: flex; align-items: center; gap: 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px 18px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      text-align: left;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    }
+    .method-btn:hover { border-color: var(--gold-border); background: var(--gold-dim); transform: translateY(-1px); }
+    .method-btn:active { transform: scale(0.98); }
+    .method-btn.green-btn { border-color: rgba(34,197,94,0.2); background: var(--green-dim); }
+    .method-btn.green-btn:hover { border-color: var(--green-b); }
+    .micon { font-size: 22px; flex-shrink: 0; }
+    .mtext { display: flex; flex-direction: column; }
+    .mtext .msub { font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+
+    /* ══════════════════════════════════════════
+       INFO BLOCKS
+    ══════════════════════════════════════════ */
+    .info-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .info-label {
+      font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 3px;
+    }
+    .info-value { font-size: 15px; font-weight: 600; color: var(--text2); margin-bottom: 12px; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+    .acct-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px; font-weight: 700;
+      color: var(--green); text-align: center;
+      letter-spacing: 0.05em; margin: 6px 0 12px;
+    }
+    .wallet-addr {
+      font-size: 11px; color: var(--muted);
+      word-break: break-all; text-align: center;
+      margin: 4px 0 10px; line-height: 1.6;
+    }
+
+    /* ══════════════════════════════════════════
+       BUTTONS
+    ══════════════════════════════════════════ */
+    .btn {
+      display: block; width: 100%;
+      padding: 14px 16px;
+      border: none; border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer; margin-top: 10px;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      text-align: center; text-decoration: none;
+      letter-spacing: 0.01em;
+      position: relative; overflow: hidden;
+    }
+    .btn:hover  { opacity: 0.88; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0) scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-gold  { background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%); color: #09090f; box-shadow: 0 4px 14px rgba(201,168,76,0.25); }
+    .btn-green { background: var(--green); color: #fff; box-shadow: 0 4px 14px rgba(34,197,94,0.25); }
+    .btn-blue  { background: var(--blue);  color: #fff; box-shadow: 0 4px 14px rgba(59,130,246,0.25); }
+    .btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--muted); }
+    .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+    .btn-copy  { background: var(--green-dim); border: 1px solid var(--green-b); color: var(--green); }
+    [data-theme="light"] .btn-copy  { color: #166534; }
+
+    /* Loading spinner inside button */
+    .btn-spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    .btn-gold .btn-spinner { border-color: rgba(0,0,0,0.2); border-top-color: #09090f; }
+
+    /* ══════════════════════════════════════════
+       FILE UPLOAD
+    ══════════════════════════════════════════ */
+    .upload-label {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface2);
+      border: 1.5px dashed rgba(201,168,76,0.25);
+      border-radius: 12px; padding: 16px;
+      cursor: pointer; margin-top: 12px;
+      font-size: 13px; color: var(--muted);
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+    }
+    .upload-label:hover { border-color: var(--gold); color: var(--text); background: var(--gold-dim); }
+    .upload-label input { display: none; }
+    .upload-name { font-size: 12px; color: var(--gold); margin-left: auto; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .preview img {
+      width: 100%; border-radius: 10px;
+      margin-top: 10px;
+      border: 1px solid var(--border);
+      display: none;
+    }
+
+    /* ══════════════════════════════════════════
+       FIELD / INPUT
+    ══════════════════════════════════════════ */
+    .field { margin-top: 14px; }
+    .field label { display: block; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .field input {
+      width: 100%; padding: 13px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.25s;
+      caret-color: var(--gold);
+    }
+    .field input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+    .field input::placeholder { color: var(--muted); font-size: 13px; }
+    .field input.error-field { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-dim); }
+
+    /* ══════════════════════════════════════════
+       SELECTED PLAN TAG
+    ══════════════════════════════════════════ */
+    .selected-plan-tag {
+      display: inline-block;
+      background: var(--gold-dim);
+      border: 1px solid var(--gold-border);
+      color: var(--gold-light);
+      font-size: 12px; font-weight: 500;
+      padding: 4px 12px; border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    [data-theme="light"] .selected-plan-tag { color: var(--gold); }
+
+    /* ══════════════════════════════════════════
+       SUCCESS PAGE
+    ══════════════════════════════════════════ */
+    .success-wrap { text-align: center; padding: 38px 20px 20px; }
+    .success-icon {
+      width: 74px; height: 74px;
+      background: var(--green-dim);
+      border: 2px solid var(--green-b);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; margin: 0 auto 20px;
+      animation: pop 0.4s cubic-bezier(.175,.885,.32,1.275);
+    }
+    @keyframes pop {
+      from { transform: scale(0.5); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    .success-title { font-family: 'Cormorant Garamond', serif; font-size: 27px; font-weight: 700; color: var(--green); margin-bottom: 10px; }
+    [data-theme="light"] .success-title { color: #166534; }
+    .success-body  { font-size: 13px; color: var(--muted); line-height: 1.7; }
+    .success-steps {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px; margin: 18px 0 0;
+      text-align: left;
+    }
+    .success-steps .step { display: flex; gap: 10px; margin-bottom: 10px; font-size: 13px; color: var(--text2); line-height: 1.5; }
+    .success-steps .step:last-child { margin-bottom: 0; }
+    .step-num {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--gold-dim); border: 1px solid var(--gold-border);
+      color: var(--gold); font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ══════════════════════════════════════════
+       ALREADY PREMIUM
+    ══════════════════════════════════════════ */
+    .premium-badge-wrap { text-align: center; padding: 32px 20px 0; }
+    .premium-badge-pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+      color: #09090f; font-weight: 700; font-size: 13px;
+      padding: 7px 18px; border-radius: 30px; margin-bottom: 14px;
+    }
+
+    /* ══════════════════════════════════════════
+       MISC
+    ══════════════════════════════════════════ */
+    .hidden-addr { display: none !important; }
+    a { text-decoration: none; }
+    .mt4 { margin-top: 14px; }
+  </style>
+</head>
+
+<body>
+
+<!-- ══ TOAST CONTAINER ══ -->
+<div id="toastContainer"></div>
+
+<!-- ══ TOP BAR ══ -->
+<div class="topbar">
+  <span class="crown">👑</span>
+  <span class="brand">Intelligent Premium</span>
+  <span class="spacer"></span>
+  <span class="sub">Secure</span>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark">
+    <span class="theme-icon"><span>🌙</span><span>☀️</span></span>
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════
+     CHECKING PAGE
+══════════════════════════════════════ -->
+<div id="checkingPage" class="page active">
+  <div class="spinner-ring"></div>
+  <p class="checking-label">Checking your account…</p>
+  <p class="checking-sub">Connecting to server</p>
+</div>
+
+<!-- ══════════════════════════════════════
+     ALREADY PREMIUM PAGE
+══════════════════════════════════════ -->
+<div id="alreadyPremiumPage" class="page">
+  <div class="premium-badge-wrap">
+    <div class="premium-badge-pill">👑 Active Premium</div>
+    <div class="section-head" style="padding-top:6px;">
+      <div class="eyebrow">You're all set</div>
+      <h1>You already have Premium</h1>
+      <p>Your account is already upgraded. No further action needed. Contact admin if you'd like to change your plan.</p>
+    </div>
+  </div>
+  <!-- status banner slot -->
+  <div id="alreadyBanner" class="status-banner success show" style="margin-top:18px;">
+    <span class="status-icon">✅</span>
+    <div class="status-text"><b>Premium Active</b><span>Your premium access is fully active and working.</span></div>
+  </div>
+  <div style="padding: 0 20px; margin-top: 16px;">
+    <a href="https://wa.me/2349114301708" target="_blank" class="btn btn-green">💬 Change Plan — WhatsApp Admin</a>
+    <a href="https://t.me/intelligentverificationlinkbot/intelligent" class="btn btn-ghost" style="margin-top:10px;">← Back to Intelligent</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PLAN PAGE
+══════════════════════════════════════ -->
+<div id="planPage" class="page">
+  <div class="section-head">
+    <div class="eyebrow">Choose your plan</div>
+    <h1>Premium Access</h1>
+    <p>Dollar price updates live from NGN → USD. USD payments via BNB Smart Chain crypto wallet only.</p>
+  </div>
+
+  <!-- USD rate status -->
+  <div id="rateBanner" class="status-banner info show" style="margin-top:16px;">
+    <span class="status-icon">🔄</span>
+    <div class="status-text"><b>Fetching live rates…</b><span>USD prices will appear shortly.</span></div>
+  </div>
+
+  <div class="plans">
+    <div class="plan-card" id="pc1">
+      <div class="plan-icon">⚡</div>
+      <div class="plan-name">One Week</div>
+      <div class="plan-desc">Perfect for trying Premium</div>
+      <div class="plan-price-row">
+        <span class="plan-ngn">₦5,000</span>
+        <span class="plan-usd usd-loading" id="usd1">loading…</span>
+      </div>
+    </div>
+
+    <div class="plan-card" id="pc2">
+      <div class="plan-icon">🥈</div>
+      <div class="plan-name">Two Weeks</div>
+      <div class="plan-desc">Great value for extended access</div>
+      <div class="plan-price-row">
+        <span class="plan-ngn">₦10,000</span>
+        <span class="plan-usd usd-loading" id="usd2">loading…</span>
+      </div>
+    </div>
+
+    <div class="plan-card featured" id="pc3">
+      <div class="plan-badge">Best Value</div>
+      <div class="plan-icon">🥇</div>
+      <div class="plan-name">Forever</div>
+      <div class="plan-desc">One-time payment — never expires</div>
+      <div class="plan-price-row">
+        <span class="plan-ngn">₦25,000</span>
+        <span class="plan-usd usd-loading" id="usd3">loading…</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="rate-note">Tap any plan to continue. Prices include live USD conversion.</p>
+</div>
+
+<!-- ══════════════════════════════════════
+     METHOD PAGE
+══════════════════════════════════════ -->
+<div id="methodPage" class="page">
+  <div class="section-head">
+    <div class="eyebrow">How would you like to pay?</div>
+    <h1>Payment Method</h1>
+  </div>
+  <div style="padding: 0 20px; margin-top: 20px;">
+    <div id="methodSelectedPlan" class="selected-plan-tag"></div>
+    <button class="method-btn" onclick="showNGN()">
+      <span class="micon">🏦</span>
+      <span class="mtext">
+        <span>NGN Bank Transfer</span>
+        <span class="msub">Opay — instant local transfer</span>
+      </span>
+    </button>
+    <button class="method-btn" onclick="showUSD()">
+      <span class="micon">💎</span>
+      <span class="mtext">
+        <span>USD Crypto (BNB / BEP-20)</span>
+        <span class="msub">Trust Wallet or any BEP-20 wallet</span>
+      </span>
+    </button>
+    <button class="method-btn green-btn" onclick="openWhatsApp()">
+      <span class="micon">💬</span>
+      <span class="mtext">
+        <span>Chat with Admin</span>
+        <span class="msub">WhatsApp — live assistance</span>
+      </span>
+    </button>
+    <button class="btn btn-ghost mt4" onclick="goBack('plan')">← Back to Plans</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     NGN PAGE
+══════════════════════════════════════ -->
+<div id="ngnPage" class="page">
+  <div class="section-head">
+    <div class="eyebrow">NGN Payment</div>
+    <h1>Bank Transfer</h1>
+  </div>
+
+  <div id="ngnBanner" class="status-banner info" style="margin-top:14px;">
+    <span class="status-icon">ℹ️</span>
+    <div class="status-text"><b>How it works</b><span>Transfer the exact amount, upload your screenshot, and admin will confirm within 24 hrs.</span></div>
+  </div>
+
+  <div class="inner">
+    <div id="ngnSelectedTag" class="selected-plan-tag"></div>
+    <div class="info-block">
+      <div class="info-label">Account Name</div>
+      <div class="info-value">Olatunji Abdumalik Ayomide</div>
+      <hr class="divider">
+      <div class="info-label">Bank</div>
+      <div class="info-value">Opay</div>
+      <hr class="divider">
+      <div class="info-label">Account Number</div>
+      <div class="acct-num" id="ngnAccountText">9114301708</div>
+      <button class="btn btn-copy" onclick="copyNGNAccount()">📋 Copy Account Number</button>
+    </div>
+
+    <label class="upload-label" id="ngnUploadLabel">
+      <span>📸</span>
+      <span>Upload payment screenshot</span>
+      <span class="upload-name" id="ngnFileName"></span>
+      <input type="file" id="ngnProof" accept="image/*" onchange="handleFileUpload(this,'ngnPreview','ngnFileName','ngnUploadLabel')">
+    </label>
+    <div class="preview"><img id="ngnPreview" alt="Payment proof preview"></div>
+
+    <div class="field">
+      <label>WhatsApp / Phone Number</label>
+      <input type="tel" id="ngnWhatsapp" placeholder="+234 800 000 0000">
+    </div>
+
+    <button class="btn btn-gold" id="ngnSubmitBtn" onclick="submitPayment('NGN')" style="margin-top:18px;">
+      Submit Payment
+    </button>
+    <button class="btn btn-ghost" onclick="goBack('method')">← Back</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     USD PAGE
+══════════════════════════════════════ -->
+<div id="usdPage" class="page">
+  <div class="section-head">
+    <div class="eyebrow">Crypto Payment</div>
+    <h1>USD via BNB Smart Chain</h1>
+  </div>
+
+  <div id="usdBanner" class="status-banner info" style="margin-top:14px;">
+    <span class="status-icon">⚠️</span>
+    <div class="status-text"><b>Send on BNB Smart Chain (BEP-20) only</b><span>Sending on the wrong network will result in permanent loss of funds.</span></div>
+  </div>
+
+  <div class="inner">
+    <div id="usdSelectedTag" class="selected-plan-tag"></div>
+    <div class="info-block">
+      <div class="info-label">Network</div>
+      <div class="info-value">BNB Smart Chain (BEP-20)</div>
+      <hr class="divider">
+      <div class="info-label">Wallet Address</div>
+      <div class="wallet-addr">0xbBcc409872bC2441400735624638F3D67DAa7C4C</div>
+      <div id="walletAddress" class="hidden-addr">0xbBcc409872bC2441400735624638F3D67DAa7C4C</div>
+      <button class="btn btn-copy" onclick="copyWallet()">📋 Copy Wallet Address (BEP-20)</button>
+    </div>
+
+    <a href="https://link.trustwallet.com/send?coin=20000714&address=0xbBcc409872bC2441400735624638F3D67DAa7C4C"
+       target="_blank" class="btn btn-blue" style="margin-top:4px;">
+      ✅ Open in Trust Wallet
+    </a>
+
+    <label class="upload-label" id="usdUploadLabel" style="margin-top:12px;">
+      <span>📸</span>
+      <span>Upload transaction screenshot</span>
+      <span class="upload-name" id="usdFileName"></span>
+      <input type="file" id="usdProof" accept="image/*" onchange="handleFileUpload(this,'usdPreview','usdFileName','usdUploadLabel')">
+    </label>
+    <div class="preview"><img id="usdPreview" alt="Transaction proof preview"></div>
+
+    <div class="field">
+      <label>WhatsApp Number</label>
+      <input type="tel" id="usdWhatsapp" maxlength="15" placeholder="+234 800 000 0000">
+    </div>
+
+    <button class="btn btn-gold" id="usdSubmitBtn" onclick="submitPayment('USD')" style="margin-top:18px;">
+      Submit Payment
+    </button>
+    <button class="btn btn-ghost" onclick="goBack('method')">← Back</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SUCCESS PAGE
+══════════════════════════════════════ -->
+<div id="successPage" class="page">
+  <div class="success-wrap">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Payment Submitted!</div>
+    <p class="success-body">Your payment proof has been sent to admin for review.</p>
+
+    <div class="success-steps">
+      <div class="step"><div class="step-num">1</div><div>Admin receives your proof instantly via Telegram</div></div>
+      <div class="step"><div class="step-num">2</div><div>Review usually takes <b>under 24 hours</b></div></div>
+      <div class="step"><div class="step-num">3</div><div>You'll get a bot notification when confirmed or declined</div></div>
+    </div>
+
+    <div class="status-banner warn show" style="margin-top:16px;">
+      <span class="status-icon">⚠️</span>
+      <div class="status-text"><b>Important</b><span>Fake payment proofs will be declined immediately and may result in a ban.</span></div>
+    </div>
+    <p class="success-body" style="margin-top:12px;">
+      Need help? <a href="https://wa.me/2349114301708" target="_blank" style="color:var(--gold); font-weight:600;">Contact Admin on WhatsApp</a>
+    </p>
+    <a href="https://t.me/intelligentverificationlinkbot/intelligent" class="btn btn-ghost" style="margin-top:22px;">← Back to Intelligent</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────────────
+   RAILWAY URL  ← hardcoded, no form input needed
+───────────────────────────────────────────────────── */
+const RAILWAY_URL = "https://YOUR-APP.up.railway.app";
+
+/* ─────────────────────────────────────────────────────
+   TELEGRAM
+───────────────────────────────────────────────────── */
+const tg   = window.Telegram.WebApp;
+tg.expand();
+const user = tg.initDataUnsafe?.user;
+
+/* ─────────────────────────────────────────────────────
+   THEME
+───────────────────────────────────────────────────── */
+const savedTheme = localStorage.getItem("ip_theme") || "dark";
+document.documentElement.setAttribute("data-theme", savedTheme);
+
+function toggleTheme() {
+  const cur  = document.documentElement.getAttribute("data-theme");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("ip_theme", next);
+  showToast("info", next === "light" ? "☀️ Light mode" : "🌙 Dark mode", "Theme switched");
+}
+
+/* ─────────────────────────────────────────────────────
+   TOAST SYSTEM
+───────────────────────────────────────────────────── */
+const ICONS = { success:"✅", error:"❌", info:"ℹ️", warn:"⚠️" };
+const LABELS = { success:"Success", error:"Error", info:"Notice", warn:"Warning" };
+
+function showToast(type, title, msg, duration = 3800) {
+  const c = document.getElementById("toastContainer");
+  const t = document.createElement("div");
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `
+    <span class="toast-icon">${ICONS[type]||"ℹ️"}</span>
+    <div class="toast-body">
+      <div class="toast-title">${title}</div>
+      ${msg ? `<div class="toast-msg">${msg}</div>` : ""}
+    </div>
+    <button class="toast-close" onclick="dismissToast(this.parentElement)">✕</button>`;
+  c.appendChild(t);
+  const timer = setTimeout(() => dismissToast(t), duration);
+  t._timer = timer;
+}
+
+function dismissToast(el) {
+  if (!el || !el.parentElement) return;
+  clearTimeout(el._timer);
+  el.classList.add("out");
+  setTimeout(() => el.remove(), 260);
+}
+
+/* ─────────────────────────────────────────────────────
+   PAGE ROUTING
+───────────────────────────────────────────────────── */
+const ALL_PAGES = ["checkingPage","planPage","methodPage","ngnPage","usdPage","successPage","alreadyPremiumPage"];
+
+function showPage(id) {
+  ALL_PAGES.forEach(p => {
+    const el = document.getElementById(p);
+    el.classList.remove("active");
+  });
+  document.getElementById(id).classList.add("active");
+}
+
+function goBack(where) {
+  if (where === "plan")   showPage("planPage");
+  if (where === "method") showPage("methodPage");
+}
+
+/* ─────────────────────────────────────────────────────
+   ON LOAD — PREMIUM CHECK
+───────────────────────────────────────────────────── */
+document.addEventListener("DOMContentLoaded", async () => {
+  if (!user?.id) {
+    showPage("planPage");
+    showToast("info", "Guest mode", "Log in via Telegram for a personalised experience.");
+    return;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout    = setTimeout(() => controller.abort(), 8000);
+
+    const res  = await fetch(`${RAILWAY_URL}/premium/check/${user.id}`, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+    const data = await res.json();
+    if (data.isPremium) {
+      showPage("alreadyPremiumPage");
+      showToast("success", "Premium Active", "Your account is fully upgraded 🎉");
+    } else {
+      showPage("planPage");
+    }
+  } catch (e) {
+    console.error("Premium check failed:", e);
+    showPage("planPage");
+
+    const msg = e.name === "AbortError"
+      ? "Server took too long to respond — continuing anyway."
+      : "Couldn't reach server — continuing in offline mode.";
+    showToast("warn", "Connection issue", msg, 5000);
+
+    document.getElementById("rateBanner").className = "status-banner warn show";
+    document.getElementById("rateBanner").innerHTML = `
+      <span class="status-icon">⚠️</span>
+      <div class="status-text"><b>Server unreachable</b><span>You can still browse plans. Submit payment via WhatsApp if needed.</span></div>`;
+  }
+});
+
+/* ─────────────────────────────────────────────────────
+   PLAN SELECTION
+───────────────────────────────────────────────────── */
+let selectedPlan = "";
+
+function choosePlan(plan) {
+  selectedPlan = plan;
+  document.getElementById("methodSelectedPlan").innerText = plan;
+  document.getElementById("ngnSelectedTag").innerText     = plan;
+  document.getElementById("usdSelectedTag").innerText     = plan;
+  showPage("methodPage");
+}
+
+/* ─────────────────────────────────────────────────────
+   LIVE USD RATES
+───────────────────────────────────────────────────── */
+const PRICES_NGN = { week1: 5000, week2: 10000, forever: 25000 };
+
+async function fetchRate() {
+  try {
+    const res  = await fetch("https://open.er-api.com/v6/latest/NGN");
+    if (!res.ok) throw new Error("Rate fetch failed");
+    const data = await res.json();
+    const r    = data.rates.USD;
+    const fmt  = n => `$${(n * r).toFixed(2)}`;
+
+    const u1 = fmt(PRICES_NGN.week1);
+    const u2 = fmt(PRICES_NGN.week2);
+    const u3 = fmt(PRICES_NGN.forever);
+
+    const el1 = document.getElementById("usd1");
+    const el2 = document.getElementById("usd2");
+    const el3 = document.getElementById("usd3");
+
+    el1.innerText = u1; el1.classList.remove("usd-loading");
+    el2.innerText = u2; el2.classList.remove("usd-loading");
+    el3.innerText = u3; el3.classList.remove("usd-loading");
+
+    document.getElementById("pc1").onclick = () => choosePlan(`One Week — ₦5,000 / ${u1}`);
+    document.getElementById("pc2").onclick = () => choosePlan(`Two Weeks — ₦10,000 / ${u2}`);
+    document.getElementById("pc3").onclick = () => choosePlan(`Forever — ₦25,000 / ${u3}`);
+
+    // Update rate banner
+    const rb = document.getElementById("rateBanner");
+    if (rb) {
+      rb.className = "status-banner success show";
+      rb.innerHTML = `<span class="status-icon">✅</span><div class="status-text"><b>Live rates loaded</b><span>USD prices are up to date. Tap a plan to continue.</span></div>`;
+      setTimeout(() => { rb.classList.remove("show"); }, 3500);
+    }
+
+  } catch (e) {
+    console.warn("USD rate fetch failed:", e);
+
+    document.getElementById("pc1").onclick = () => choosePlan("One Week — ₦5,000");
+    document.getElementById("pc2").onclick = () => choosePlan("Two Weeks — ₦10,000");
+    document.getElementById("pc3").onclick = () => choosePlan("Forever — ₦25,000");
+
+    ["usd1","usd2","usd3"].forEach(id => {
+      const el = document.getElementById(id);
+      el.innerText = "N/A"; el.classList.remove("usd-loading");
+    });
+
+    const rb = document.getElementById("rateBanner");
+    if (rb) {
+      rb.className = "status-banner error show";
+      rb.innerHTML = `<span class="status-icon">❌</span><div class="status-text"><b>Could not fetch USD rates</b><span>NGN prices are still accurate. USD conversion unavailable right now.</span></div>`;
+    }
+    showToast("warn", "Rate fetch failed", "USD prices couldn't load — NGN prices are still correct.");
+  }
+}
+
+fetchRate();
+
+/* ─────────────────────────────────────────────────────
+   METHOD PAGE
+───────────────────────────────────────────────────── */
+function showNGN() {
+  document.getElementById("ngnBanner").classList.add("show");
+  showPage("ngnPage");
+}
+function showUSD() {
+  showPage("usdPage");
+}
+function openWhatsApp() {
+  const name = user ? `${user.first_name || ""} ${user.last_name || ""}`.trim() : "a user";
+  const msg  = encodeURIComponent(`Hello harmayoh, I got your contact from Intelligent Verification Link Bot. I want to buy premium. (Plan: ${selectedPlan || "not selected yet"})`);
+  window.open("https://wa.me/2349114301708?text=" + msg, "_blank");
+}
+
+/* ─────────────────────────────────────────────────────
+   FILE UPLOAD HANDLER
+───────────────────────────────────────────────────── */
+function handleFileUpload(input, previewId, nameId, labelId) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Validate type
+  if (!file.type.startsWith("image/")) {
+    showToast("error", "Invalid file", "Please upload an image file (JPG, PNG, etc.)");
+    input.value = "";
+    return;
+  }
+  // Validate size (10 MB)
+  if (file.size > 10 * 1024 * 1024) {
+    showToast("error", "File too large", "Screenshot must be under 10 MB.");
+    input.value = "";
+    return;
+  }
+
+  // Show filename
+  const nameEl = document.getElementById(nameId);
+  if (nameEl) nameEl.innerText = file.name;
+
+  // Preview
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById(previewId);
+    img.src = e.target.result;
+    img.style.display = "block";
+  };
+  reader.onerror = () => showToast("error", "Preview failed", "Couldn't preview the image — but you can still submit.");
+  reader.readAsDataURL(file);
+
+  showToast("success", "Screenshot added", `${file.name} ready to submit.`);
+}
+
+/* ─────────────────────────────────────────────────────
+   SUBMIT PAYMENT
+───────────────────────────────────────────────────── */
+async function submitPayment(type) {
+  const whatsappId = type === "NGN" ? "ngnWhatsapp" : "usdWhatsapp";
+  const proofId    = type === "NGN" ? "ngnProof"    : "usdProof";
+  const btnId      = type === "NGN" ? "ngnSubmitBtn": "usdSubmitBtn";
+  const whatsappEl = document.getElementById(whatsappId);
+  const proofEl    = document.getElementById(proofId);
+  const btn        = document.getElementById(btnId);
+
+  // Clear previous error state
+  whatsappEl.classList.remove("error-field");
+
+  // Validation
+  let valid = true;
+  if (!whatsappEl.value.trim()) {
+    whatsappEl.classList.add("error-field");
+    whatsappEl.focus();
+    showToast("error", "Missing phone number", "Please enter your WhatsApp / phone number.");
+    valid = false;
+  }
+  if (!proofEl.files[0]) {
+    showToast("error", "No screenshot", "Please upload your payment screenshot before submitting.");
+    valid = false;
+  }
+  if (!valid) return;
+
+  // Loading state
+  btn.disabled = true;
+  btn.innerHTML = `<span class="btn-spinner"></span> Submitting…`;
+  showToast("info", "Submitting payment…", "Please wait while we send your proof to admin.");
+
+  const u = tg.initDataUnsafe?.user || {};
+  const formData = new FormData();
+  formData.append("telegram_id", u.id          || "");
+  formData.append("first_name",  u.first_name   || "");
+  formData.append("last_name",   u.last_name    || "");
+  formData.append("username",    u.username     || "");
+  formData.append("plan",        selectedPlan);
+  formData.append("method",      type);
+  formData.append("whatsapp",    whatsappEl.value.trim());
+  formData.append("photo",       proofEl.files[0]);
+
+  try {
+    const controller = new AbortController();
+    const timeout    = setTimeout(() => controller.abort(), 20000);
+
+    const res  = await fetch(`${RAILWAY_URL}/payment/submit`, {
+      method: "POST", body: formData, signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Server error ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Submission failed");
+
+    // ✅ Full success
+    showPage("successPage");
+    showToast("success", "Payment submitted!", "Admin has been notified 🎉");
+
+  } catch (e) {
+    console.error("Submit error:", e);
+    btn.disabled = false;
+    btn.innerHTML = "Submit Payment";
+
+    if (e.name === "AbortError") {
+      showToast("error", "Request timed out", "The server took too long. Please try again or contact admin on WhatsApp.", 6000);
+    } else if (!navigator.onLine) {
+      showToast("error", "No internet connection", "Check your connection and try again.", 6000);
+    } else {
+      showToast("error", "Submission failed", e.message || "Unexpected error. Please try again or contact admin.", 6000);
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────
+   COPY HELPERS
+───────────────────────────────────────────────────── */
+async function copyNGNAccount() {
+  const acc = document.getElementById("ngnAccountText").innerText.trim();
+  try {
+    await navigator.clipboard.writeText(acc);
+    showToast("success", "Copied!", "Account number copied to clipboard.");
+  } catch {
+    showToast("error", "Copy failed", "Please copy the number manually: " + acc);
+  }
+}
+
+async function copyWallet() {
+  const addr = document.getElementById("walletAddress").innerText.trim();
+  try {
+    await navigator.clipboard.writeText(addr);
+    showToast("success", "Copied!", "Wallet address copied to clipboard.");
+  } catch {
+    showToast("error", "Copy failed", "Please copy the address manually.");
+  }
+}
+</script>
+
+</body>
+</html>
